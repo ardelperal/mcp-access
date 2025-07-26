@@ -172,8 +172,43 @@ campos = [
 2. Verificar ruta en configuración de Trae
 3. Reiniciar Trae AI
 
+## 🔗 Integración en Otros Proyectos
+
+### Git Submodule (Recomendado)
+```bash
+# En tu proyecto, añadir como submodule
+git submodule add https://github.com/ardelperal/mcp-access.git mcp-modules/mcp-access
+git submodule update --init --recursive
+
+# Instalar dependencias
+pip install -r mcp-modules/mcp-access/requirements.txt
+
+# Configurar automáticamente
+cd mcp-modules/mcp-access
+python scripts/setup/auto_setup.py
+```
+
+### Instalación Automática
+```bash
+# Para Windows
+curl -O https://raw.githubusercontent.com/ardelperal/mcp-access/main/scripts/setup/setup-mcp-access.bat
+setup-mcp-access.bat
+
+# Para Linux/macOS
+curl -O https://raw.githubusercontent.com/ardelperal/mcp-access/main/scripts/setup/setup-mcp-access.sh
+chmod +x setup-mcp-access.sh
+./setup-mcp-access.sh
+```
+
+### Verificar Integración
+```bash
+# Test de integración completo
+python mcp-modules/mcp-access/tools/test_integration.py
+```
+
 ## 📖 Documentación Adicional
 
+- [Guía de Integración Completa](INTEGRATION_GUIDE.md)
 - [Documentación Técnica](docs/technical_documentation.md)
 - [Guía de Instalación Local](INSTALL_LOCAL.md)
 - [Guía de Sincronización](SYNC_GUIDE.md)
