@@ -294,6 +294,35 @@ def print_mcp_usage_examples():
             "args": {
                 "table_name": "tabla_temporal"
             }
+        },
+        {
+            "title": "11. Obtener relaciones entre tablas",
+            "tool": "get_table_relationships",
+            "args": {}
+        },
+        {
+            "title": "12. Obtener índices de una tabla",
+            "tool": "get_table_indexes",
+            "args": {
+                "table_name": "empleados"
+            }
+        },
+        {
+            "title": "13. Obtener claves primarias de una tabla",
+            "tool": "get_primary_keys",
+            "args": {
+                "table_name": "empleados"
+            }
+        },
+        {
+            "title": "14. Generar documentación completa de la base de datos",
+            "tool": "generate_database_documentation",
+            "args": {}
+        },
+        {
+            "title": "15. Exportar documentación en formato Markdown",
+            "tool": "export_documentation_markdown",
+            "args": {}
         }
     ]
     

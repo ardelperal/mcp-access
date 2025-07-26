@@ -86,6 +86,15 @@ python scripts/setup/auto_setup.py
 - `delete_record`: Eliminar registro
 - `get_records`: Obtener registros con filtros opcionales
 
+### Análisis de Estructura y Relaciones 🆕
+- `get_table_relationships`: Obtener todas las relaciones entre tablas (claves foráneas)
+- `get_table_indexes`: Obtener los índices de una tabla específica
+- `get_primary_keys`: Obtener las claves primarias de una tabla
+
+### Documentación Automática 🆕
+- `generate_database_documentation`: Generar documentación completa de la base de datos
+- `export_documentation_markdown`: Exportar documentación en formato Markdown
+
 ## ⚙️ Configuración para Trae AI
 
 ### Configuración Automática
@@ -174,6 +183,59 @@ campos = [
     {"nombre": "Nombre", "tipo": "TEXT(50)"},
     {"nombre": "Email", "tipo": "TEXT(100)"}
 ]
+```
+
+### Ejemplos de Uso de Nuevas Funcionalidades
+
+```json
+// Conectar a base de datos con contraseña
+{
+  "tool": "connect_database",
+  "arguments": {
+    "database_path": "C:\\mi_proyecto\\datos.accdb",
+    "password": "mi_contraseña"
+  }
+}
+
+// Obtener relaciones entre tablas
+{
+  "tool": "get_table_relationships",
+  "arguments": {}
+}
+
+// Obtener índices de una tabla
+{
+  "tool": "get_table_indexes",
+  "arguments": {
+    "table_name": "empleados"
+  }
+}
+
+// Generar documentación completa
+{
+  "tool": "generate_database_documentation",
+  "arguments": {}
+}
+
+// Exportar documentación en Markdown
+{
+  "tool": "export_documentation_markdown",
+  "arguments": {}
+}
+
+// Crear tabla con relaciones
+{
+  "tool": "create_table",
+  "arguments": {
+    "table_name": "pedidos",
+    "columns": [
+      {"name": "id", "type": "INTEGER", "primary_key": true},
+      {"name": "cliente_id", "type": "INTEGER", "not_null": true},
+      {"name": "fecha", "type": "DATE"},
+      {"name": "total", "type": "DOUBLE"}
+    ]
+  }
+}
 ```
 
 ## 🔧 Solución de Problemas

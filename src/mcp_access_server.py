@@ -203,6 +203,176 @@ class AccessDatabaseManager:
         except Exception as e:
             logger.error(f"Error eliminando tabla {table_name}: {e}")
             raise
+    
+    def get_table_relationships(self) -> List[Dict[str, Any]]:
+        """Obtener las relaciones entre tablas de la base de datos."""
+        if not self.is_connected():
+            raise Exception("No hay conexión activa a la base de datos")
+        
+        try:
+            cursor = self.connection.cursor()
+            relationships = []
+            
+            # Obtener información de claves foráneas
+            for fk in cursor.foreignKeys():
+                relationships.append({
+                    "parent_table": fk.pktable_name,
+                    "parent_column": fk.pkcolumn_name,
+                    "child_table": fk.fktable_name,
+                    "child_column": fk.fkcolumn_name,
+                    "constraint_name": fk.fk_name,
+                    "update_rule": fk.update_rule,
+                    "delete_rule": fk.delete_rule
+                })
+            
+            return relationships
+        except Exception as e:
+            logger.error(f"Error obteniendo relaciones: {e}")
+            raise
+    
+    def get_table_indexes(self, table_name: str) -> List[Dict[str, Any]]:
+        """Obtener los índices de una tabla específica."""
+        if not self.is_connected():
+            raise Exception("No hay conexión activa a la base de datos")
+        
+        try:
+            cursor = self.connection.cursor()
+            indexes = []
+            
+            for index in cursor.statistics(table=table_name):
+                if index.index_name:  # Filtrar entradas sin nombre de índice
+                    indexes.append({
+                        "index_name": index.index_name,
+                        "column_name": index.column_name,
+                        "unique": not index.non_unique,
+                        "ordinal_position": index.ordinal_position,
+                        "type": index.type
+                    })
+            
+            return indexes
+        except Exception as e:
+            logger.error(f"Error obteniendo índices de tabla {table_name}: {e}")
+            raise
+    
+    def get_primary_keys(self, table_name: str) -> List[str]:
+        """Obtener las claves primarias de una tabla."""
+        if not self.is_connected():
+            raise Exception("No hay conexión activa a la base de datos")
+        
+        try:
+            cursor = self.connection.cursor()
+            primary_keys = []
+            
+            for pk in cursor.primaryKeys(table=table_name):
+                primary_keys.append(pk.column_name)
+            
+            return primary_keys
+        except Exception as e:
+            logger.error(f"Error obteniendo claves primarias de tabla {table_name}: {e}")
+            raise
+    
+    def generate_database_documentation(self) -> Dict[str, Any]:
+        """Generar documentación completa de la base de datos."""
+        if not self.is_connected():
+            raise Exception("No hay conexión activa a la base de datos")
+        
+        try:
+            documentation = {
+                "database_path": self.database_path,
+                "tables": {},
+                "relationships": [],
+                "summary": {}
+            }
+            
+            # Obtener todas las tablas
+            tables = self.list_tables()
+            documentation["summary"]["total_tables"] = len(tables)
+            
+            # Documentar cada tabla
+            for table in tables:
+                table_doc = {
+                    "schema": self.get_table_schema(table),
+                    "primary_keys": self.get_primary_keys(table),
+                    "indexes": self.get_table_indexes(table),
+                    "record_count": 0
+                }
+                
+                # Obtener conteo de registros
+                try:
+                    count_result = self.execute_query(f"SELECT COUNT(*) as count FROM [{table}]")
+                    table_doc["record_count"] = count_result[0]["count"] if count_result else 0
+                except:
+                    table_doc["record_count"] = "N/A"
+                
+                documentation["tables"][table] = table_doc
+            
+            # Obtener relaciones
+            documentation["relationships"] = self.get_table_relationships()
+            documentation["summary"]["total_relationships"] = len(documentation["relationships"])
+            
+            return documentation
+            
+        except Exception as e:
+            logger.error(f"Error generando documentación: {e}")
+            raise
+    
+    def export_documentation_markdown(self) -> str:
+        """Exportar la documentación en formato Markdown."""
+        doc = self.generate_database_documentation()
+        
+        markdown = f"""# Documentación de Base de Datos
+
+**Archivo:** `{doc['database_path']}`  
+**Fecha de generación:** {__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+## Resumen
+
+- **Total de tablas:** {doc['summary']['total_tables']}
+- **Total de relaciones:** {doc['summary']['total_relationships']}
+
+## Tablas
+
+"""
+        
+        # Documentar cada tabla
+        for table_name, table_info in doc["tables"].items():
+            markdown += f"""### {table_name}
+
+**Registros:** {table_info['record_count']}
+
+#### Estructura
+| Columna | Tipo | Tamaño | Nulo | Valor por Defecto |
+|---------|------|--------|------|-------------------|
+"""
+            
+            for col in table_info["schema"]:
+                nullable = "Sí" if col["nullable"] else "No"
+                default = col["default_value"] if col["default_value"] else "-"
+                markdown += f"| {col['column_name']} | {col['data_type']} | {col['size']} | {nullable} | {default} |\n"
+            
+            # Claves primarias
+            if table_info["primary_keys"]:
+                markdown += f"\n**Claves Primarias:** {', '.join(table_info['primary_keys'])}\n"
+            
+            # Índices
+            if table_info["indexes"]:
+                markdown += "\n#### Índices\n"
+                for idx in table_info["indexes"]:
+                    unique_text = " (ÚNICO)" if idx["unique"] else ""
+                    markdown += f"- **{idx['index_name']}**: {idx['column_name']}{unique_text}\n"
+            
+            markdown += "\n---\n\n"
+        
+        # Relaciones
+        if doc["relationships"]:
+            markdown += "## Relaciones entre Tablas\n\n"
+            for rel in doc["relationships"]:
+                markdown += f"- **{rel['parent_table']}.{rel['parent_column']}** → **{rel['child_table']}.{rel['child_column']}**\n"
+                if rel["constraint_name"]:
+                    markdown += f"  - Restricción: `{rel['constraint_name']}`\n"
+                markdown += f"  - Actualización: {rel['update_rule']}, Eliminación: {rel['delete_rule']}\n\n"
+        
+        return markdown
 
 # Instancia global del gestor de base de datos
 db_manager = AccessDatabaseManager()
@@ -412,6 +582,55 @@ async def handle_list_tools() -> List[Tool]:
                 },
                 "required": ["table_name"]
             }
+        ),
+        Tool(
+            name="get_table_relationships",
+            description="Obtener las relaciones entre tablas de la base de datos",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+                "required": []
+            }
+        ),
+        Tool(
+            name="get_table_indexes",
+            description="Obtener los índices de una tabla específica",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "table_name": {"type": "string", "description": "Nombre de la tabla"}
+                },
+                "required": ["table_name"]
+            }
+        ),
+        Tool(
+            name="get_primary_keys",
+            description="Obtener las claves primarias de una tabla",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "table_name": {"type": "string", "description": "Nombre de la tabla"}
+                },
+                "required": ["table_name"]
+            }
+        ),
+        Tool(
+            name="generate_database_documentation",
+            description="Generar documentación completa de la base de datos",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+                "required": []
+            }
+        ),
+        Tool(
+            name="export_documentation_markdown",
+            description="Exportar la documentación de la base de datos en formato Markdown",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+                "required": []
+            }
         )
     ]
 
@@ -602,6 +821,70 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> List[types.T
                 result_text = f"📊 No se encontraron registros en '{table_name}'"
             
             return [types.TextContent(type="text", text=result_text)]
+        
+        elif name == "get_table_relationships":
+            relationships = db_manager.get_table_relationships()
+            
+            if relationships:
+                result_text = f"🔗 Relaciones entre tablas ({len(relationships)} encontradas):\n\n"
+                for rel in relationships:
+                    result_text += f"• {rel['parent_table']}.{rel['parent_column']} → {rel['child_table']}.{rel['child_column']}\n"
+                    if rel['constraint_name']:
+                        result_text += f"  Restricción: {rel['constraint_name']}\n"
+                    result_text += f"  Actualización: {rel['update_rule']}, Eliminación: {rel['delete_rule']}\n\n"
+            else:
+                result_text = "🔗 No se encontraron relaciones entre tablas"
+            
+            return [types.TextContent(type="text", text=result_text)]
+        
+        elif name == "get_table_indexes":
+            table_name = arguments["table_name"]
+            indexes = db_manager.get_table_indexes(table_name)
+            
+            if indexes:
+                result_text = f"📇 Índices de la tabla '{table_name}' ({len(indexes)} encontrados):\n\n"
+                for idx in indexes:
+                    unique_text = " (ÚNICO)" if idx["unique"] else ""
+                    result_text += f"• {idx['index_name']}: {idx['column_name']}{unique_text}\n"
+                    result_text += f"  Posición: {idx['ordinal_position']}, Tipo: {idx['type']}\n\n"
+            else:
+                result_text = f"📇 No se encontraron índices en la tabla '{table_name}'"
+            
+            return [types.TextContent(type="text", text=result_text)]
+        
+        elif name == "get_primary_keys":
+            table_name = arguments["table_name"]
+            primary_keys = db_manager.get_primary_keys(table_name)
+            
+            if primary_keys:
+                result_text = f"🔑 Claves primarias de la tabla '{table_name}':\n\n"
+                result_text += "\n".join([f"• {pk}" for pk in primary_keys])
+            else:
+                result_text = f"🔑 No se encontraron claves primarias en la tabla '{table_name}'"
+            
+            return [types.TextContent(type="text", text=result_text)]
+        
+        elif name == "generate_database_documentation":
+            documentation = db_manager.generate_database_documentation()
+            
+            result_text = f"📚 Documentación de la base de datos generada:\n\n"
+            result_text += f"📁 Archivo: {documentation['database_path']}\n"
+            result_text += f"📊 Total de tablas: {documentation['summary']['total_tables']}\n"
+            result_text += f"🔗 Total de relaciones: {documentation['summary']['total_relationships']}\n\n"
+            
+            result_text += "📋 Tablas:\n"
+            for table_name, table_info in documentation["tables"].items():
+                result_text += f"• {table_name} ({table_info['record_count']} registros)\n"
+            
+            return [types.TextContent(type="text", text=result_text)]
+        
+        elif name == "export_documentation_markdown":
+            markdown_doc = db_manager.export_documentation_markdown()
+            
+            return [types.TextContent(
+                type="text",
+                text="📄 Documentación exportada en formato Markdown:\n\n" + markdown_doc
+            )]
         
         else:
             return [types.TextContent(
