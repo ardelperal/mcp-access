@@ -174,29 +174,6 @@ campos = [
 
 ## 🔗 Integración en Otros Proyectos
 
-### Instalación Centralizada (Recomendado para Múltiples Proyectos)
-```bash
-# Instalar una vez centralmente
-# Windows
-curl -O https://raw.githubusercontent.com/ardelperal/mcp-access/main/scripts/setup/install-mcp-central.bat
-install-mcp-central.bat
-
-# Linux/macOS
-curl -O https://raw.githubusercontent.com/ardelperal/mcp-access/main/scripts/setup/install-mcp-central.sh
-chmod +x install-mcp-central.sh
-./install-mcp-central.sh
-
-# Configurar cada proyecto
-# Windows
-curl -O https://raw.githubusercontent.com/ardelperal/mcp-access/main/scripts/setup/setup-project-mcp.bat
-setup-project-mcp.bat
-
-# Linux/macOS
-curl -O https://raw.githubusercontent.com/ardelperal/mcp-access/main/scripts/setup/setup-project-mcp.sh
-chmod +x setup-project-mcp.sh
-./setup-project-mcp.sh
-```
-
 ### Git Submodule (Para Desarrollo)
 ```bash
 # En tu proyecto, añadir como submodule
