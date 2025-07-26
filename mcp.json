@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "access-db": {
+      "command": "python",
+      "args": ["src/mcp_access_server.py"],
+      "env": {}
+    }
+  },
+  "_comment": "Para instalación local, cambiar 'src/mcp_access_server.py' por la ruta absoluta completa",
+  "_example_local_config": {
+    "mcpServers": {
+      "access-db": {
+        "command": "python",
+        "args": ["c:\\Users\\adm1\\Desktop\\Proyectos\\mcp-access\\src\\mcp_access_server.py"],
+        "env": {
+          "PYTHONPATH": "c:\\Users\\adm1\\Desktop\\Proyectos\\mcp-access\\src"
+        }
+      }
+    }
+  }
+}
