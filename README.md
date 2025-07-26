@@ -5,6 +5,7 @@ Un servidor MCP (Model Context Protocol) profesional para manipular bases de dat
 ## 🚀 Características
 
 - ✅ **Conectividad Access**: Soporte completo para .accdb y .mdb
+- ✅ **Bases de Datos Protegidas**: Soporte para bases de datos con contraseña
 - ✅ **Operaciones CRUD**: Crear, leer, actualizar y eliminar tablas y registros
 - ✅ **Consultas SQL**: Ejecutar consultas SQL personalizadas
 - ✅ **Esquemas**: Listar tablas, campos y obtener estructura completa
@@ -70,7 +71,7 @@ python scripts/setup/auto_setup.py
 ## 🛠️ Herramientas Disponibles
 
 ### Conexión y Gestión
-- `connect_database`: Conectar a una base de datos Access
+- `connect_database`: Conectar a una base de datos Access (con soporte para contraseñas)
 - `list_tables`: Listar todas las tablas disponibles
 - `get_table_schema`: Obtener esquema detallado de una tabla
 
@@ -141,7 +142,22 @@ python tools/test_final_summary.py
 
 ## 📚 Ejemplos de Uso
 
-### Conectar y Listar Tablas
+### Conectar a Base de Datos
+```python
+# Conectar sin contraseña
+connect_database(database_path="C:/ruta/mi_base.accdb")
+
+# Conectar con contraseña específica
+connect_database(database_path="C:/ruta/mi_base.accdb", password="mi_contraseña")
+
+# Conectar usando contraseña por defecto (dpddpd)
+connect_database(database_path="C:/ruta/mi_base.accdb", password="dpddpd")
+
+# Si no se especifica contraseña, se intenta primero con "dpddpd" y luego sin contraseña
+connect_database(database_path="C:/ruta/mi_base.accdb")
+```
+
+### Consultas y Operaciones
 ```python
 # El servidor MCP maneja automáticamente las conexiones
 # Usar desde Trae AI o cliente MCP compatible
@@ -166,6 +182,10 @@ campos = [
 1. Verificar configuración de proxy: `python tools/test_pip_install.py`
 2. Comprobar Access Database Engine instalado
 3. Verificar permisos de archivo de base de datos
+4. **Verificar contraseña de la base de datos**:
+   - Si la base de datos tiene contraseña, especificarla en el parámetro `password`
+   - Por defecto se intenta con "dpddpd" si no se especifica contraseña
+   - Si falla con contraseña, se intenta sin contraseña automáticamente
 
 ### Error de Configuración MCP
 1. Ejecutar `install.bat` nuevamente

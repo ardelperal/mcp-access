@@ -36,30 +36,50 @@ class AccessDatabaseManager:
         self.connection: Optional[pyodbc.Connection] = None
         self.database_path: Optional[str] = None
         
-    def connect(self, database_path: str) -> bool:
-        """Conectar a una base de datos Access."""
+    def connect(self, database_path: str, password: str = "dpddpd") -> bool:
+        """Conectar a una base de datos Access.
+        
+        Args:
+            database_path: Ruta al archivo de base de datos
+            password: Contraseña de la base de datos (por defecto: dpddpd)
+        """
+        # Determinar el driver apropiado
+        if database_path.endswith('.accdb'):
+            driver = "Microsoft Access Driver (*.mdb, *.accdb)"
+        else:
+            driver = "Microsoft Access Driver (*.mdb)"
+        
         try:
             # Verificar que el archivo existe
             if not Path(database_path).exists():
                 raise FileNotFoundError(f"La base de datos no existe: {database_path}")
             
-            # Determinar el driver apropiado
-            if database_path.endswith('.accdb'):
-                driver = "Microsoft Access Driver (*.mdb, *.accdb)"
-            else:
-                driver = "Microsoft Access Driver (*.mdb)"
-            
-            # Crear cadena de conexión
+            # Crear cadena de conexión con contraseña
             conn_str = f"DRIVER={{{driver}}};DBQ={database_path};"
+            
+            # Agregar contraseña si se proporciona
+            if password:
+                conn_str += f"PWD={password};"
             
             # Conectar
             self.connection = pyodbc.connect(conn_str)
             self.database_path = database_path
-            logger.info(f"Conectado exitosamente a: {database_path}")
+            logger.info(f"Conectado exitosamente a: {database_path} (con contraseña)")
             return True
             
         except Exception as e:
             logger.error(f"Error al conectar a la base de datos: {e}")
+            # Si falla con contraseña, intentar sin contraseña
+            if password:
+                logger.info("Reintentando conexión sin contraseña...")
+                try:
+                    conn_str_no_pwd = f"DRIVER={{{driver}}};DBQ={database_path};"
+                    self.connection = pyodbc.connect(conn_str_no_pwd)
+                    self.database_path = database_path
+                    logger.info(f"Conectado exitosamente a: {database_path} (sin contraseña)")
+                    return True
+                except Exception as e2:
+                    logger.error(f"Error al conectar sin contraseña: {e2}")
             return False
     
     def disconnect(self):
@@ -203,6 +223,10 @@ async def handle_list_tools() -> List[Tool]:
                     "database_path": {
                         "type": "string",
                         "description": "Ruta completa al archivo de base de datos Access (.mdb o .accdb)"
+                    },
+                    "password": {
+                        "type": "string",
+                        "description": "Contraseña de la base de datos (opcional, por defecto: dpddpd)"
                     }
                 },
                 "required": ["database_path"]
@@ -398,7 +422,8 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> List[types.T
     try:
         if name == "connect_database":
             database_path = arguments["database_path"]
-            success = db_manager.connect(database_path)
+            password = arguments.get("password", "dpddpd")  # Usar contraseña por defecto si no se proporciona
+            success = db_manager.connect(database_path, password)
             if success:
                 return [types.TextContent(
                     type="text",
@@ -407,7 +432,7 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> List[types.T
             else:
                 return [types.TextContent(
                     type="text",
-                    text="❌ Error al conectar a la base de datos. Verifica la ruta y que tengas los drivers de Access instalados."
+                    text="❌ Error al conectar a la base de datos. Verifica la ruta, contraseña y que tengas los drivers de Access instalados."
                 )]
         
         elif name == "disconnect_database":

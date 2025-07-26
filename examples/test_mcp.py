@@ -29,10 +29,13 @@ async def test_access_operations():
     try:
         # 1. Conectar a la base de datos
         print(f"📡 Conectando a: {db_path}")
-        if not db_manager.connect(db_path):
-            print("❌ No se pudo conectar. Creando base de datos de ejemplo...")
-            # En un entorno real, aquí crearías la base de datos
-            return
+        # Probar primero con contraseña por defecto
+        if not db_manager.connect(db_path, "dpddpd"):
+            print("❌ No se pudo conectar con contraseña por defecto. Probando sin contraseña...")
+            if not db_manager.connect(db_path, ""):
+                print("❌ No se pudo conectar. Creando base de datos de ejemplo...")
+                # En un entorno real, aquí crearías la base de datos
+                return
         
         print("✅ Conexión exitosa!")
         
@@ -190,10 +193,26 @@ def print_mcp_usage_examples():
     
     examples = [
         {
-            "title": "1. Conectar a una base de datos",
+            "title": "1. Conectar a una base de datos sin contraseña",
             "tool": "connect_database",
             "args": {
                 "database_path": "C:\\ruta\\a\\mi_base_datos.accdb"
+            }
+        },
+        {
+            "title": "1b. Conectar a una base de datos con contraseña",
+            "tool": "connect_database",
+            "args": {
+                "database_path": "C:\\ruta\\a\\mi_base_datos.accdb",
+                "password": "mi_contraseña_secreta"
+            }
+        },
+        {
+            "title": "1c. Conectar usando contraseña por defecto",
+            "tool": "connect_database",
+            "args": {
+                "database_path": "C:\\ruta\\a\\mi_base_datos.accdb",
+                "password": "dpddpd"
             }
         },
         {
