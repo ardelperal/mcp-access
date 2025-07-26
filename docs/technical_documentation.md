@@ -1,328 +1,318 @@
-# Documentación Técnica - MCP Access Server
+# Documentación Técnica - MCP Access Database
 
 ## Arquitectura del Sistema
 
 ### Componentes Principales
 
-1. **mcp_access_server.py**: Servidor principal MCP
-2. **config.py**: Configuración y utilidades
-3. **AccessDatabaseManager**: Clase principal para gestión de BD
-4. **Herramientas MCP**: 11 herramientas especializadas
+1. **Servidor MCP** (`src/mcp_access_server.py`)
+   - Implementa el protocolo Model Context Protocol
+   - Maneja conexiones a bases de datos Access
+   - Expone herramientas para operaciones CRUD
 
-### Flujo de Operación
+2. **Detector de Proxy** (`scripts/utils/detect_proxy.py`)
+   - Detecta configuraciones de proxy automáticamente
+   - Soporte específico para Ivanti VPN
+   - Configura pip y git automáticamente
 
-```
-Cliente MCP → Servidor MCP → AccessDatabaseManager → pyodbc → Access DB
-```
+3. **Sistema de Instalación** (`scripts/setup/`)
+   - Instalación automatizada con detección de proxy
+   - Configuración de Trae AI
+   - Scripts de diagnóstico
 
-## Herramientas Disponibles
+## Protocolo MCP
 
-### 1. connect_database
-**Propósito**: Establecer conexión con base de datos Access
-**Parámetros**:
-- `database_path` (string): Ruta completa al archivo .mdb/.accdb
+### Herramientas Implementadas
 
-**Ejemplo**:
+#### `connect_database`
 ```json
 {
-  "database_path": "C:\\datos\\empresa.accdb"
-}
-```
-
-### 2. disconnect_database
-**Propósito**: Cerrar conexión activa
-**Parámetros**: Ninguno
-
-### 3. list_tables
-**Propósito**: Listar todas las tablas de la BD
-**Parámetros**: Ninguno
-**Retorna**: Lista de nombres de tablas
-
-### 4. get_table_schema
-**Propósito**: Obtener estructura de una tabla
-**Parámetros**:
-- `table_name` (string): Nombre de la tabla
-
-**Retorna**:
-```json
-[
-  {
-    "column_name": "id",
-    "data_type": "INTEGER",
-    "size": 4,
-    "nullable": false,
-    "default_value": null
-  }
-]
-```
-
-### 5. create_table
-**Propósito**: Crear nueva tabla
-**Parámetros**:
-- `table_name` (string): Nombre de la tabla
-- `columns` (array): Definiciones de columnas
-
-**Ejemplo**:
-```json
-{
-  "table_name": "productos",
-  "columns": [
-    {
-      "name": "id",
-      "type": "INTEGER",
-      "primary_key": true,
-      "not_null": true
+  "name": "connect_database",
+  "description": "Conectar a una base de datos Access",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "database_path": {
+        "type": "string",
+        "description": "Ruta al archivo .accdb o .mdb"
+      }
     },
-    {
-      "name": "nombre",
-      "type": "TEXT",
-      "not_null": true
-    },
-    {
-      "name": "precio",
-      "type": "DOUBLE",
-      "default": "0"
-    }
-  ]
-}
-```
-
-### 6. drop_table
-**Propósito**: Eliminar tabla
-**Parámetros**:
-- `table_name` (string): Nombre de la tabla a eliminar
-
-### 7. execute_query
-**Propósito**: Ejecutar consulta SQL personalizada
-**Parámetros**:
-- `query` (string): Consulta SQL
-- `parameters` (array, opcional): Parámetros para la consulta
-
-**Ejemplos**:
-```json
-{
-  "query": "SELECT * FROM empleados WHERE salario > ?",
-  "parameters": ["50000"]
-}
-```
-
-### 8. insert_record
-**Propósito**: Insertar nuevo registro
-**Parámetros**:
-- `table_name` (string): Nombre de la tabla
-- `data` (object): Datos a insertar (clave-valor)
-
-**Ejemplo**:
-```json
-{
-  "table_name": "empleados",
-  "data": {
-    "nombre": "Juan",
-    "apellido": "Pérez",
-    "salario": 50000
+    "required": ["database_path"]
   }
 }
 ```
 
-### 9. update_record
-**Propósito**: Actualizar registros existentes
-**Parámetros**:
-- `table_name` (string): Nombre de la tabla
-- `data` (object): Datos a actualizar
-- `where_clause` (string): Condición WHERE
-
-**Ejemplo**:
+#### `execute_query`
 ```json
 {
-  "table_name": "empleados",
-  "data": {"salario": 55000},
-  "where_clause": "id = 1"
+  "name": "execute_query",
+  "description": "Ejecutar consulta SQL",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "Consulta SQL a ejecutar"
+      },
+      "parameters": {
+        "type": "array",
+        "description": "Parámetros para la consulta"
+      }
+    },
+    "required": ["query"]
+  }
 }
 ```
 
-### 10. delete_record
-**Propósito**: Eliminar registros
-**Parámetros**:
-- `table_name` (string): Nombre de la tabla
-- `where_clause` (string): Condición WHERE
+## Detección de Proxy
 
-### 11. get_records
-**Propósito**: Consultar registros con filtros
-**Parámetros**:
-- `table_name` (string): Nombre de la tabla
-- `columns` (array, opcional): Columnas a seleccionar
-- `where_clause` (string, opcional): Filtro WHERE
-- `order_by` (string, opcional): Orden
-- `limit` (integer, opcional): Límite de registros
+### Métodos de Detección
 
-## Tipos de Datos Soportados
+1. **WinHTTP Settings**
+   ```python
+   def get_winhttp_proxy():
+       # Lee configuración de WinHTTP del registro
+       # HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Connections
+   ```
 
-| Tipo Access | Descripción | Ejemplo |
-|-------------|-------------|---------|
-| TEXT | Texto corto (255 chars) | "Juan Pérez" |
-| MEMO | Texto largo (65K chars) | Descripción larga |
-| INTEGER | Número entero | 42 |
-| LONG | Entero largo | 1000000 |
-| DOUBLE | Decimal doble precisión | 3.14159 |
-| CURRENCY | Moneda | 1234.56 |
-| DATETIME | Fecha y hora | "2023-12-25 15:30:00" |
-| YESNO | Booleano | True/False |
+2. **Internet Explorer Settings**
+   ```python
+   def get_ie_proxy():
+       # Lee configuración de IE del registro
+       # HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings
+   ```
 
-## Configuración Avanzada
+3. **Variables de Entorno**
+   ```python
+   def get_env_proxy():
+       # Verifica HTTP_PROXY, HTTPS_PROXY, etc.
+   ```
 
-### Variables de Entorno
-- `ACCESS_MCP_LOG_LEVEL`: Nivel de logging (DEBUG, INFO, WARNING, ERROR)
-- `ACCESS_MCP_MAX_RECORDS`: Máximo de registros a mostrar (default: 50)
+4. **Detección Ivanti**
+   ```python
+   def check_ivanti_connection():
+       # Verifica procesos, servicios y adaptadores de red
+       # Detecta rutas corporativas específicas
+   ```
 
-### Configuración de Seguridad
+### Configuración Automática
+
+Cuando se detecta un proxy, el sistema configura automáticamente:
+
+- **pip**: `pip config set global.proxy <proxy_url>`
+- **git**: `git config --global http.proxy <proxy_url>`
+- **Variables de entorno**: `HTTP_PROXY`, `HTTPS_PROXY`
+
+## Base de Datos Access
+
+### Conexión
+
+El sistema utiliza `pyodbc` con el driver de Microsoft Access:
+
 ```python
-{
-  "security": {
-    "allow_drop_table": True,
-    "allow_delete_records": True,
-    "require_where_clause_for_updates": True
-  }
-}
+connection_string = (
+    r'DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};'
+    f'DBQ={database_path};'
+)
+conn = pyodbc.connect(connection_string)
 ```
+
+### Operaciones Soportadas
+
+1. **DDL (Data Definition Language)**
+   - CREATE TABLE
+   - DROP TABLE
+   - ALTER TABLE (limitado)
+
+2. **DML (Data Manipulation Language)**
+   - SELECT
+   - INSERT
+   - UPDATE
+   - DELETE
+
+3. **Consultas de Metadatos**
+   - Listar tablas
+   - Obtener esquemas
+   - Información de columnas
 
 ## Manejo de Errores
 
-### Errores Comunes
+### Tipos de Error
 
-1. **Driver no encontrado**
-   - Error: `[Microsoft][ODBC Driver Manager] Data source name not found`
-   - Solución: Instalar Microsoft Access Database Engine
+1. **Errores de Conexión**
+   ```python
+   class DatabaseConnectionError(Exception):
+       pass
+   ```
 
-2. **Archivo no encontrado**
-   - Error: `Could not find file 'C:\path\to\database.accdb'`
-   - Solución: Verificar ruta y permisos
+2. **Errores de SQL**
+   ```python
+   class SQLExecutionError(Exception):
+       pass
+   ```
 
-3. **Tabla no existe**
-   - Error: `[Microsoft][ODBC Microsoft Access Driver] The Microsoft Jet database engine cannot find the input table or query`
-   - Solución: Verificar nombre de tabla
+3. **Errores de Proxy**
+   ```python
+   class ProxyDetectionError(Exception):
+       pass
+   ```
 
-4. **Sintaxis SQL incorrecta**
-   - Error: `Syntax error in SQL statement`
-   - Solución: Revisar sintaxis SQL específica de Access
+### Logging
 
-### Códigos de Error Personalizados
+El sistema utiliza logging estructurado:
 
-- `MCP_ACCESS_001`: Error de conexión
-- `MCP_ACCESS_002`: Tabla no encontrada
-- `MCP_ACCESS_003`: Columna no encontrada
-- `MCP_ACCESS_004`: Violación de restricción
-- `MCP_ACCESS_005`: Permisos insuficientes
+```python
+import logging
 
-## Optimización y Rendimiento
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+```
 
-### Mejores Prácticas
+## Configuración de Trae AI
 
-1. **Conexiones**:
-   - Reutilizar conexiones cuando sea posible
-   - Cerrar conexiones explícitamente
-   - Usar pool de conexiones para aplicaciones concurrentes
+### Archivo de Configuración
 
-2. **Consultas**:
-   - Usar índices en columnas de búsqueda frecuente
-   - Limitar resultados con TOP/LIMIT
-   - Evitar SELECT * en tablas grandes
+La configuración se almacena en `~/.mcp/config.json`:
 
-3. **Transacciones**:
-   - Agrupar operaciones relacionadas
-   - Usar transacciones explícitas para operaciones críticas
-
-### Límites del Sistema
-
-- **Tamaño máximo de BD**: 2 GB (Access 2007+)
-- **Registros por tabla**: ~1 millón (práctico)
-- **Columnas por tabla**: 255
-- **Índices por tabla**: 32
-- **Conexiones concurrentes**: Limitadas (recomendado < 10)
-
-## Integración con Clientes MCP
-
-### Claude Desktop
 ```json
 {
   "mcpServers": {
-    "access-db": {
+    "mcp-access": {
       "command": "python",
-      "args": ["C:\\ruta\\al\\proyecto\\src\\mcp_access_server.py"],
+      "args": ["C:/ruta/completa/src/mcp_access_server.py"],
       "env": {
-        "ACCESS_MCP_LOG_LEVEL": "INFO"
+        "PYTHONPATH": "C:/ruta/completa"
       }
     }
   }
 }
 ```
 
-### Otros Clientes
-El servidor es compatible con cualquier cliente que implemente el protocolo MCP estándar.
+### Variables de Entorno
 
-## Extensiones Futuras
+- `MCP_ACCESS_DEBUG`: Habilita logging detallado
+- `MCP_ACCESS_TIMEOUT`: Timeout para conexiones (segundos)
+- `MCP_ACCESS_MAX_ROWS`: Máximo número de filas a retornar
 
-### Funcionalidades Planeadas
+## Seguridad
 
-1. **Soporte para consultas complejas**:
-   - JOINs entre múltiples tablas
-   - Subconsultas
-   - Funciones agregadas avanzadas
+### Consideraciones
 
-2. **Gestión de índices**:
-   - Crear/eliminar índices
-   - Análisis de rendimiento
+1. **Validación de Entrada**
+   - Sanitización de consultas SQL
+   - Validación de rutas de archivo
+   - Escape de caracteres especiales
 
-3. **Backup y restauración**:
-   - Exportar datos a diferentes formatos
-   - Importar desde CSV/Excel
+2. **Permisos de Archivo**
+   - Verificación de permisos de lectura/escritura
+   - Validación de rutas permitidas
 
-4. **Seguridad avanzada**:
-   - Autenticación de usuarios
-   - Permisos granulares por tabla
+3. **Inyección SQL**
+   - Uso de parámetros preparados
+   - Validación de sintaxis SQL
 
-5. **Monitoreo**:
-   - Métricas de rendimiento
-   - Logs de auditoría
+## Rendimiento
 
-## Solución de Problemas
+### Optimizaciones
 
-### Diagnóstico Paso a Paso
-
-1. **Verificar instalación de Python**:
-   ```bash
-   python --version
-   ```
-
-2. **Verificar dependencias**:
-   ```bash
-   pip list | findstr pyodbc
-   pip list | findstr mcp
-   ```
-
-3. **Verificar drivers ODBC**:
-   ```bash
-   python -c "import pyodbc; print(pyodbc.drivers())"
-   ```
-
-4. **Probar conexión básica**:
+1. **Pool de Conexiones**
    ```python
-   import pyodbc
-   conn = pyodbc.connect(r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=C:\ruta\a\bd.accdb;")
-   print("Conexión exitosa")
+   class ConnectionPool:
+       def __init__(self, max_connections=5):
+           self.max_connections = max_connections
+           self.connections = []
    ```
 
-### Logs de Depuración
+2. **Cache de Metadatos**
+   ```python
+   @lru_cache(maxsize=100)
+   def get_table_schema(table_name):
+       # Cache de esquemas de tabla
+   ```
 
-Para habilitar logs detallados:
-```python
-import logging
-logging.basicConfig(level=logging.DEBUG)
+3. **Paginación**
+   ```python
+   def get_records(table, limit=1000, offset=0):
+       # Implementa paginación para grandes datasets
+   ```
+
+## Testing
+
+### Estructura de Tests
+
+```
+tools/
+├── test_pip_install.py      # Test de conectividad pip
+├── test_ivanti_detection.py # Test de detección Ivanti
+└── test_final_summary.py    # Test completo del sistema
 ```
 
-## Contacto y Soporte
+### Ejecución de Tests
 
-Para reportar problemas o solicitar funcionalidades:
-1. Revisar esta documentación
-2. Verificar logs de error
-3. Probar con base de datos de ejemplo
-4. Documentar pasos para reproducir el problema
+```bash
+# Test individual
+python tools/test_pip_install.py
+
+# Test completo
+python tools/test_final_summary.py
+```
+
+## Troubleshooting
+
+### Problemas Comunes
+
+1. **Error: "Driver not found"**
+   - Instalar Microsoft Access Database Engine
+   - Verificar arquitectura (32-bit vs 64-bit)
+
+2. **Error: "Access denied"**
+   - Verificar permisos de archivo
+   - Ejecutar como administrador si es necesario
+
+3. **Error: "Proxy connection failed"**
+   - Verificar configuración de proxy
+   - Ejecutar `python scripts/utils/detect_proxy.py`
+
+### Logs de Diagnóstico
+
+```bash
+# Habilitar logging detallado
+set MCP_ACCESS_DEBUG=1
+python src/mcp_access_server.py
+```
+
+## Desarrollo
+
+### Estructura del Código
+
+```python
+# Patrón de diseño utilizado
+class MCPAccessServer:
+    def __init__(self):
+        self.tools = self._register_tools()
+    
+    def _register_tools(self):
+        return [
+            Tool("connect_database", self.connect_database),
+            Tool("execute_query", self.execute_query),
+            # ...
+        ]
+```
+
+### Extensibilidad
+
+Para añadir nuevas herramientas:
+
+1. Definir la función handler
+2. Registrar en `_register_tools()`
+3. Añadir documentación
+4. Crear tests
+
+### Contribución
+
+1. Fork del repositorio
+2. Crear rama feature
+3. Implementar cambios
+4. Añadir tests
+5. Crear Pull Request
