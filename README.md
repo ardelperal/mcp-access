@@ -234,7 +234,6 @@ python tools/test_integration.py
 - [Guía de Integración Completa](INTEGRATION_GUIDE.md)
 - [Documentación Técnica](docs/technical_documentation.md)
 - [Guía de Instalación Local](INSTALL_LOCAL.md)
-- [Guía de Sincronización](SYNC_GUIDE.md)
 
 ## 🤝 Contribuir
 
