@@ -20,28 +20,30 @@ mcp-access/
 ├── 📄 install.bat              # Instalador principal
 ├── 📄 requirements.txt         # Dependencias Python
 ├── 📄 mcp.json                # Configuración MCP
+├── 📄 setup.py                # Configuración de instalación
 ├── 📁 src/                    # Código fuente
 │   ├── mcp_access_server.py   # Servidor MCP principal
+│   ├── enhanced_documentation.py # Generación de documentación
 │   └── config.py              # Configuración
 ├── 📁 scripts/                # Scripts de instalación y utilidades
 │   ├── 📁 setup/              # Scripts de configuración
-│   │   ├── auto_setup.py      # Configuración automática
-│   │   ├── setup_with_proxy_detection.bat
-│   │   ├── quick_setup.bat
-│   │   ├── install.bat
-│   │   └── configure_claude.bat
-│   └── 📁 utils/              # Utilidades
-│       ├── detect_proxy.py    # Detección de proxy
-│       ├── start.bat          # Iniciar servidor
-│       ├── sync_mcp.bat       # Sincronización
-│       └── sync_mcp.sh
+│   └── 📁 utils/              # Utilidades (detección proxy, etc.)
+├── 📁 tests/                  # Pruebas y ejemplos
+│   ├── demo_complete_functionality.py
+│   ├── test_mcp_access.py     # Pruebas principales
+│   ├── test_com_relationships.py
+│   └── 📁 sample_databases/   # Bases de datos de ejemplo
 ├── 📁 tools/                  # Herramientas de desarrollo
-│   ├── test_pip_install.py    # Pruebas de conectividad
-│   ├── test_ivanti_detection.py
-│   └── test_final_summary.py
-├── 📁 tests/                  # Pruebas unitarias
+│   ├── test_integration.py    # Pruebas de integración
+│   └── test_pip_install.py    # Pruebas de conectividad
 ├── 📁 examples/               # Ejemplos de uso
-└── 📁 docs/                   # Documentación
+│   ├── mcp-integration-example.json
+│   └── test_mcp.py
+└── 📁 docs/                   # Documentación completa
+    ├── technical_documentation.md
+    ├── ejemplos_prompts.md    # Ejemplos de uso
+    ├── implementation_summary.md
+    └── relationship_detection.md
 ```
 
 ## ⚡ Instalación Rápida
@@ -94,6 +96,15 @@ python scripts/setup/auto_setup.py
 ### Documentación Automática 🆕
 - `generate_database_documentation`: Generar documentación completa de la base de datos
 - `export_documentation_markdown`: Exportar documentación en formato Markdown
+
+#### Características de la Documentación Automática
+- **Análisis completo de estructura**: Esquemas de tablas, tipos de datos, restricciones
+- **Detección de relaciones**: Identificación automática de claves foráneas y relaciones entre tablas
+- **Índices y claves primarias**: Documentación detallada de todos los índices
+- **Conteo de registros**: Estadísticas de cada tabla
+- **Formato Markdown**: Exportación en formato legible y profesional
+- **Manejo robusto de errores**: Funciona incluso con bases de datos con problemas de codificación o permisos
+- **Compatibilidad extendida**: Soporte para diferentes versiones de Access y configuraciones ODBC
 
 ## ⚙️ Configuración para Trae AI
 
@@ -183,6 +194,106 @@ campos = [
     {"nombre": "Nombre", "tipo": "TEXT(50)"},
     {"nombre": "Email", "tipo": "TEXT(100)"}
 ]
+```
+
+
+### Análisis y Documentación de Base de Datos 🆕
+
+```python
+# Ejemplo completo de análisis de base de datos
+from mcp_access_server import AccessDatabaseManager
+
+# Conectar a la base de datos
+db_manager = AccessDatabaseManager()
+db_manager.connect("C:/mi_proyecto/datos.accdb", password="mi_contraseña")
+
+# Obtener información de estructura
+tables = db_manager.list_tables()
+print(f"Tablas encontradas: {len(tables)}")
+
+# Analizar una tabla específica
+table_name = "empleados"
+schema = db_manager.get_table_schema(table_name)
+primary_keys = db_manager.get_primary_keys(table_name)
+indexes = db_manager.get_table_indexes(table_name)
+
+print(f"Esquema de {table_name}:")
+for column in schema:
+    print(f"  - {column['column_name']}: {column['data_type']}")
+
+# Generar documentación completa
+documentation = db_manager.generate_database_documentation()
+print(f"Documentación generada para {documentation['summary']['total_tables']} tablas")
+
+# Exportar a Markdown
+markdown_content = db_manager.export_documentation_markdown()
+with open("documentacion_bd.md", "w", encoding="utf-8") as f:
+    f.write(markdown_content)
+
+# Desconectar
+db_manager.disconnect()
+```
+
+### Ejemplo de Script de Prueba
+
+```python
+# Script de prueba completo (similar a test_lanzadera_datos.py)
+import os
+from src.mcp_access_server import AccessDatabaseManager
+
+def test_database_analysis():
+    # Configurar rutas
+    db_path = "tests/sample_databases/mi_base.accdb"
+    output_path = "tests/sample_databases/documentacion.md"
+    
+    # Crear manager y conectar
+    db_manager = AccessDatabaseManager()
+    
+    try:
+        print("🔌 Conectando a la base de datos...")
+        db_manager.connect(db_path)
+        
+        print("📋 Listando tablas...")
+        tables = db_manager.list_tables()
+        print(f"   Encontradas {len(tables)} tablas")
+        
+        print("🔍 Analizando esquemas...")
+        for table in tables[:3]:  # Primeras 3 tablas
+            schema = db_manager.get_table_schema(table)
+            print(f"   {table}: {len(schema)} columnas")
+        
+        print("🔗 Analizando relaciones...")
+        relationships = db_manager.get_table_relationships()
+        print(f"   Encontradas {len(relationships)} relaciones")
+        
+        print("📊 Generando documentación...")
+        documentation = db_manager.generate_database_documentation()
+        
+        print("📝 Exportando a Markdown...")
+        markdown_content = db_manager.export_documentation_markdown()
+        
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(markdown_content)
+        
+        print(f"✅ Documentación guardada en: {output_path}")
+        
+        # Estadísticas finales
+        total_records = sum(table.get('record_count', 0) 
+                          for table in documentation['tables'].values())
+        print(f"📈 Resumen:")
+        print(f"   - Tablas: {documentation['summary']['total_tables']}")
+        print(f"   - Relaciones: {documentation['summary']['total_relationships']}")
+        print(f"   - Registros totales: {total_records}")
+        
+    except Exception as e:
+        print(f"❌ Error: {e}")
+    finally:
+        if db_manager.is_connected():
+            db_manager.disconnect()
+            print("🔌 Desconectado de la base de datos")
+
+if __name__ == "__main__":
+    test_database_analysis()
 ```
 
 ### Ejemplos de Uso de Nuevas Funcionalidades

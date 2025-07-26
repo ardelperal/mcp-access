@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "mcp-access-database": {
+      "command": "python",
+      "args": ["src/mcp_access_server.py"],
+      "env": {
+        "PYTHONPATH": "."
+      },
+      "description": "Microsoft Access Database Server - Conecta y manipula bases de datos Access (.accdb/.mdb)"
+    }
+  }
+}
