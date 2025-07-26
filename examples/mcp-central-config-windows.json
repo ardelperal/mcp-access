@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "mcp-access": {
+      "command": "python",
+      "args": ["C:/MCPs/mcp-access/src/mcp_access_server.py"],
+      "env": {
+        "PYTHONPATH": "C:/MCPs/mcp-access/src"
+      }
+    }
+  }
+}

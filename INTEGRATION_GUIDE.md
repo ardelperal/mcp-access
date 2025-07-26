@@ -11,7 +11,66 @@ Esta guía explica cómo integrar el **MCP Access Database** en otros proyectos.
 
 ## 🚀 Métodos de Integración
 
-### 1. **Git Submodule (Recomendado)**
+### 1. **Instalación Centralizada (Recomendado para Múltiples Proyectos)**
+
+Si planeas usar este MCP en múltiples proyectos, la mejor práctica es instalarlo centralmente:
+
+#### Estructura Centralizada
+```
+C:/MCPs/                     # Windows
+├── mcp-access/
+│   ├── src/
+│   ├── scripts/
+│   └── tools/
+
+~/MCPs/                      # Linux/macOS
+├── mcp-access/
+│   ├── src/
+│   ├── scripts/
+│   └── tools/
+```
+
+#### Instalación Central - Windows
+```batch
+# Descargar e instalar centralmente
+curl -O https://raw.githubusercontent.com/ardelperal/mcp-access/main/scripts/setup/install-mcp-central.bat
+install-mcp-central.bat
+```
+
+#### Instalación Central - Linux/macOS
+```bash
+# Descargar e instalar centralmente
+curl -O https://raw.githubusercontent.com/ardelperal/mcp-access/main/scripts/setup/install-mcp-central.sh
+chmod +x install-mcp-central.sh
+./install-mcp-central.sh
+```
+
+#### Configurar Proyecto Individual
+En cada proyecto que use el MCP:
+
+**Windows:**
+```batch
+# Descargar script de configuración
+curl -O https://raw.githubusercontent.com/ardelperal/mcp-access/main/scripts/setup/setup-project-mcp.bat
+setup-project-mcp.bat
+```
+
+**Linux/macOS:**
+```bash
+# Descargar script de configuración
+curl -O https://raw.githubusercontent.com/ardelperal/mcp-access/main/scripts/setup/setup-project-mcp.sh
+chmod +x setup-project-mcp.sh
+./setup-project-mcp.sh
+```
+
+#### Ventajas de la Instalación Centralizada
+- ✅ Una sola instalación para todos los proyectos
+- ✅ Actualizaciones centralizadas
+- ✅ Menor uso de espacio en disco
+- ✅ Configuración consistente
+- ✅ Fácil mantenimiento
+
+### 2. **Git Submodule (Para Desarrollo)**
 
 #### Paso 1: Añadir como Submodule
 ```bash
@@ -47,7 +106,7 @@ cd mcp-modules/mcp-access
 python scripts/setup/auto_setup.py
 ```
 
-### 2. **Instalación Automática**
+### 3. **Instalación Automática por Proyecto**
 
 #### Para Linux/macOS:
 ```bash
@@ -64,7 +123,7 @@ curl -O https://raw.githubusercontent.com/ardelperal/mcp-access/main/scripts/set
 setup-mcp-access.bat
 ```
 
-### 3. **Fork y Personalización**
+### 4. **Fork y Personalización**
 
 Si necesitas modificaciones específicas:
 

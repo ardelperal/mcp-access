@@ -174,7 +174,30 @@ campos = [
 
 ## 🔗 Integración en Otros Proyectos
 
-### Git Submodule (Recomendado)
+### Instalación Centralizada (Recomendado para Múltiples Proyectos)
+```bash
+# Instalar una vez centralmente
+# Windows
+curl -O https://raw.githubusercontent.com/ardelperal/mcp-access/main/scripts/setup/install-mcp-central.bat
+install-mcp-central.bat
+
+# Linux/macOS
+curl -O https://raw.githubusercontent.com/ardelperal/mcp-access/main/scripts/setup/install-mcp-central.sh
+chmod +x install-mcp-central.sh
+./install-mcp-central.sh
+
+# Configurar cada proyecto
+# Windows
+curl -O https://raw.githubusercontent.com/ardelperal/mcp-access/main/scripts/setup/setup-project-mcp.bat
+setup-project-mcp.bat
+
+# Linux/macOS
+curl -O https://raw.githubusercontent.com/ardelperal/mcp-access/main/scripts/setup/setup-project-mcp.sh
+chmod +x setup-project-mcp.sh
+./setup-project-mcp.sh
+```
+
+### Git Submodule (Para Desarrollo)
 ```bash
 # En tu proyecto, añadir como submodule
 git submodule add https://github.com/ardelperal/mcp-access.git mcp-modules/mcp-access
@@ -188,7 +211,7 @@ cd mcp-modules/mcp-access
 python scripts/setup/auto_setup.py
 ```
 
-### Instalación Automática
+### Instalación Automática por Proyecto
 ```bash
 # Para Windows
 curl -O https://raw.githubusercontent.com/ardelperal/mcp-access/main/scripts/setup/setup-mcp-access.bat
@@ -203,7 +226,7 @@ chmod +x setup-mcp-access.sh
 ### Verificar Integración
 ```bash
 # Test de integración completo
-python mcp-modules/mcp-access/tools/test_integration.py
+python tools/test_integration.py
 ```
 
 ## 📖 Documentación Adicional
